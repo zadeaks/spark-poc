@@ -1,9 +1,8 @@
 package com.adform.farm.revenue
 
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql._
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{sum, _}
+import org.apache.spark.sql.functions._
 
 object FarmRevenueAnalysis {
 
