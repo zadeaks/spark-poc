@@ -10,7 +10,6 @@ object StorageHandler {
     df.write
       .format("csv")
       .option("header", true)
-      .option("spark.sql.files.ignoreMissingFiles", true)
       .mode("overwrite") // (other options: append, ignore, errorIfExists)
       .save(s"/output/csv/${fileName}_${unixTimestamp}.csv")
 
