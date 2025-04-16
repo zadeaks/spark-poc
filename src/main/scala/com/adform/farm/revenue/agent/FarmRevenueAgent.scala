@@ -1,41 +1,50 @@
 package com.adform.farm.revenue.agent
 
-import com.adform.farm.revenue.utils.{DataFrameLoader, SparkContainer, StorageHandler}
 import com.adform.farm.revenue.builder.RevenueBuilder
+import com.adform.farm.revenue.utils.{DataFrameLoader, LogMaster, SparkContainer, StorageHandler}
 import org.apache.spark.sql.SparkSession
-object FarmRevenueAgent {
 
-  def run(dataFrameLoader: DataFrameLoader)(implicit spark: SparkSession): Unit = {
-    val bestGathererPerMonth = RevenueBuilder(dataFrameLoader).bestGathererPerMonth
-    StorageHandler.persistAsCsv(bestGathererPerMonth,"bestGathererPerMonth")
+import java.time.LocalDateTime
+object FarmRevenueAgent extends LogMaster {
 
-    val gathererSpecialityForFruit = RevenueBuilder(dataFrameLoader).gathererSpecialityForFruit
-    StorageHandler.persistAsCsv(gathererSpecialityForFruit,"gathererSpecialityForFruit")
+  def run(revenueBuilder: RevenueBuilder)(implicit spark: SparkSession): Unit = {
 
-    val bestEarningFruitByMonth = RevenueBuilder(dataFrameLoader).bestEarningFruitByMonth
-    StorageHandler.persistAsCsv(bestEarningFruitByMonth,"bestEarningFruitByMonth")
 
-    val bestEarningFruitOverall = RevenueBuilder(dataFrameLoader).bestEarningFruitOverall
-    StorageHandler.persistAsCsv(bestEarningFruitOverall,"bestEarningFruitOverall")
+    val bestGathererPerMonth = revenueBuilder.bestGathererPerMonth
+    StorageHandler.persistAsCsv(bestGathererPerMonth, "bestGathererPerMonth")
 
-    val leastEarningFruitByMonth = RevenueBuilder(dataFrameLoader).leastEarningFruitByMonth
-    StorageHandler.persistAsCsv(leastEarningFruitByMonth,"leastEarningFruitByMonth")
+    val gathererSpecialityForFruit = revenueBuilder.gathererSpecialityForFruit
+    StorageHandler.persistAsCsv(gathererSpecialityForFruit, "gathererSpecialityForFruit")
 
-    val leastEarningFruitOverall = RevenueBuilder(dataFrameLoader).leastEarningFruitOverall
-    StorageHandler.persistAsCsv(leastEarningFruitOverall,"leastEarningFruitOverall")
+    val bestEarningFruitByMonth = revenueBuilder.bestEarningFruitByMonth
+    StorageHandler.persistAsCsv(bestEarningFruitByMonth, "bestEarningFruitByMonth")
 
-    val bestRevenueGathererPerMonth = RevenueBuilder(dataFrameLoader).bestRevenueGathererPerMonth
-    StorageHandler.persistAsCsv(bestRevenueGathererPerMonth,"bestRevenueGathererPerMonth")
+    val bestEarningFruitOverall = revenueBuilder.bestEarningFruitOverall
+    StorageHandler.persistAsCsv(bestEarningFruitOverall, "bestEarningFruitOverall")
 
-    val bestRevenueGathererOverall = RevenueBuilder(dataFrameLoader).bestRevenueGathererOverall
-    StorageHandler.persistAsCsv(bestRevenueGathererOverall,"bestRevenueGathererOverall")
+    val leastEarningFruitByMonth = revenueBuilder.leastEarningFruitByMonth
+    StorageHandler.persistAsCsv(leastEarningFruitByMonth, "leastEarningFruitByMonth")
+
+    val leastEarningFruitOverall = revenueBuilder.leastEarningFruitOverall
+    StorageHandler.persistAsCsv(leastEarningFruitOverall, "leastEarningFruitOverall")
+
+    val bestRevenueGathererPerMonth = revenueBuilder.bestRevenueGathererPerMonth
+    StorageHandler.persistAsCsv(bestRevenueGathererPerMonth, "bestRevenueGathererPerMonth")
+
+    val bestRevenueGathererOverall = revenueBuilder.bestRevenueGathererOverall
+    StorageHandler.persistAsCsv(bestRevenueGathererOverall, "bestRevenueGathererOverall")
   }
 
   def main(args: Array[String]): Unit = {
     val env = "dev"
-    implicit val spark = SparkContainer.initializeSparkContainer(env)
+    implicit val spark: SparkSession = SparkContainer.initializeSparkContainer(env)
 
-    run(DataFrameLoader())
+    val dataFrameLoader = DataFrameLoader()
+    val revenueBuilder = RevenueBuilder(dataFrameLoader)
+
+    run(revenueBuilder)
+
+    logInfo(s"Run for FarmRevenue successfully completed on ${LocalDateTime.now().toString}")
 
     spark.stop
 

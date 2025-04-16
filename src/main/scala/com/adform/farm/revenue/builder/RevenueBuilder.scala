@@ -1,21 +1,21 @@
 package com.adform.farm.revenue.builder
 
-import com.adform.farm.revenue.utils.DataFrameLoader
+import com.adform.farm.revenue.utils.{DataFrameLoader, LogMaster}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
-class RevenueBuilder(val dataframeLoader: DataFrameLoader)(implicit spark: SparkSession) {
+class RevenueBuilder(val dataframeLoader: DataFrameLoader)(implicit spark: SparkSession) extends LogMaster {
 
 
-  val harvestDF = dataframeLoader.getHarvestDF
+  val harvestDF: DataFrame = dataframeLoader.getHarvestDF
     .select("gatherer", "date", "fruit", "amount")
 
-  val pricesDF = dataframeLoader.getPricesDF
+  val pricesDF: DataFrame = dataframeLoader.getPricesDF
     .select("fruit", "date", "price")
 
   //    build basic revenue (joining production and price) DF for reuse
-  val gathererDataWithRevenueAndMonthDF = harvestDF
+  val gathererDataWithRevenueAndMonthDF: DataFrame = harvestDF
     .join(pricesDF, Seq("date", "fruit"), "inner")
     .select("gatherer", "date", "fruit", "amount", "price")
     .withColumn("revenue", col("amount") * col("price"))
@@ -23,13 +23,13 @@ class RevenueBuilder(val dataframeLoader: DataFrameLoader)(implicit spark: Spark
     .select("gatherer", "date", "fruit", "amount", "price", "revenue", "month")
 
   // calculate earnings of fruits by month and overall
-  val earningsOfFruitsByMonthDF = gathererDataWithRevenueAndMonthDF
+  val earningsOfFruitsByMonthDF: DataFrame = gathererDataWithRevenueAndMonthDF
     .select("month", "fruit", "revenue")
     .groupBy("month", "fruit")
     .agg(round(sum(col("revenue")), 2).alias("revenue_of_fruit_for_month"))
     .select("month", "fruit", "revenue_of_fruit_for_month")
 
-  val earningsOfFruitsOverallDF = gathererDataWithRevenueAndMonthDF
+  val earningsOfFruitsOverallDF: DataFrame = gathererDataWithRevenueAndMonthDF
     .select("fruit", "revenue")
     .groupBy("fruit")
     .agg(round(sum(col("revenue")), 2).alias("overall_revenue_of_fruit"))
@@ -37,6 +37,7 @@ class RevenueBuilder(val dataframeLoader: DataFrameLoader)(implicit spark: Spark
 
   //   1. Who is your best gatherer in terms of the amounts (weight) of fruits gathered every month
   def bestGathererPerMonth: DataFrame = {
+    logInfo(s"Inside bestGathererPerMonth method")
     val bestGathererPerMonthDF = harvestDF
       .withColumn("month", substring(col("date"), 0, 7))
       .select("month", "gatherer", "fruit", "amount")
@@ -48,6 +49,7 @@ class RevenueBuilder(val dataframeLoader: DataFrameLoader)(implicit spark: Spark
       .select("month", "gatherer", "total_volume_collected_by_gatherer")
       .sort("month")
 
+    logInfo(s"bestGathererPerMonth method completed")
     bestGathererPerMonthDF
   }
 
